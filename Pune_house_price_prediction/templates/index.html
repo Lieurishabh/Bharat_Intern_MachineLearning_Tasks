@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>House Price Prediction</title>
+    <link rel="stylesheets" href="E:\BharatIntern\Pune_house_price_prediction\styles.css">
+    <style>
+        body{
+            background-color: rgb(241,241,241);
+            padding: 0;
+            margin: 0;
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+            background-image: url("{{ url_for('static', filename='images/bg.jpg') }}");
+            background-size: cover;
+        }
+        .header{
+            background-color: rgba(0, 0, 0, 0.815);
+            position: relative;
+            height: 100%;
+            width: 100%;
+            display: inline-block;
+            color: white;
+            text-align: center;
+        }
+
+        footer{
+            position: relative;
+            bottom: 0;
+            background-color:  rgba(0, 0, 0, 0.815);
+            display: inline-block;
+            width: 100%;
+            color: white;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        .main-content{
+            align-items: center;
+            padding: 20px;
+            margin: 10px 125px;
+            text-align: center;
+            border: 2px solid ;
+            border-radius: 8px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .main-content p{
+            display: inline-block;
+            text-align: center;
+            font-size: 28px;
+            background-color: blue;
+            border-radius: 8px;
+            color: white;
+        }
+
+        #predictionForm{
+            padding: 2% 10%;
+            align-items: center;
+        }
+
+        #predictionForm div{
+            text-align: left;
+            margin-bottom: 16px;
+        }
+
+        #predictionForm select{
+            align-items: center;
+            width: 100%;
+            height: 2em;
+        }
+
+        #predictionForm label{
+            display: inline-block;
+            margin-bottom: 8px;
+            color: white;
+            background-color: black;
+        }
+
+        #submit-button{
+            padding: 10px;
+            font-weight: bold;
+            border: 2px solid;
+            border-radius: 10px;
+            font-size: 18px;
+        }
+
+        #submit-button:hover{
+            cursor: pointer;
+            background-color: blue;
+            color: white;
+            border: 2px solid whitesmoke;
+        }
+
+        #predictedPrice {
+            display: inline-block;
+            margin-top: 20px;
+            font-weight: bold;
+            text-align: center;
+            background-color: aliceblue;
+        }
+
+
+       
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1 class="header-heading">Pune House Price Prediction</h1>
+    </header>
+    <main class="main-content">
+        <p>!!! Welcome to House Price Prediction System !!!</p>
+
+        
+        <form id="predictionForm" method="POST">
+            <div class="beds">
+                <label for="beds">Bedrooms:</label>
+            <select id="beds" name="beds">
+                <option value="" disabled selected>Select number of bedrooms</option>
+                {% for bedroom in bedrooms %}
+                    <option value="{{ bedroom }}">{{ bedroom}}</option>
+                {% endfor %}
+            </select>
+
+            </div>
+            
+            <div class="baths">
+                <label for="baths">Bathrooms:</label>
+            <select id="baths" name="baths">
+                <option value="" disabled selected>Select number of bathrooms</option>
+                {% for bathroom in bathrooms %}
+                    <option value="{{ bathroom }}">{{ bathroom}}</option>
+                {% endfor %}
+            </select>
+            </div>
+
+            <div class="balcony">
+                <label for="balcony">Balconies:</label>
+            <select id="balcony" name="balcony">
+                <option value="" disabled selected>Select number of balconies</option>
+                {% for balcony in balconies %}
+                    <option value="{{ balcony }}">{{ balcony }}</option>
+                {% endfor %}
+            </select>
+            </div>
+
+
+            <div class="area_type">
+                <label for="area_type">Area type:</label>
+            <select id="area_type" name="area_type">
+                <option value="" disabled selected>Select area type</option>
+                {% for area_type in area_list %}
+                    <option value="{{ area_type }}">{{ area_type }}</option>
+                {% endfor %}
+            </select>
+            </div>
+
+            <div class="size">
+                <label for="size">Size:</label>
+            <select id="size" name="size">
+                <option value="" disabled selected>Select size of the house</option>
+                {% for size in size_list %}
+                    <option value="{{ size }}">{{ size }} sqft</option>
+                {% endfor %}
+            </select>
+            </div>
+
+            
+            <button type="button" id="submit-button" onclick="sendData()">Predict Price</button>
+
+            <div id="predictedPrice"></div>
+        </form>
+
+    </main>
+    <footer>
+        <p>&copy; 2024 House Price Prediction. All rights reserved.</p>
+    </footer>
+    <!-- Add your JavaScript scripts or include external scripts here -->
+    <script>
+        // JavaScript function to fetch options for dropdowns
+        function fetchOptions(endpoint, dropdownId) {
+            fetch(endpoint)
+                .then(response => response.json())
+                .then(data => {
+                    const dropdown = document.getElementById(dropdownId);
+                    dropdown.innerHTML = '<option value="" disabled selected>Select an option</option>';
+                    data.forEach(option => {
+                        const optionElement = document.createElement('option');
+                        optionElement.value = option;
+                        optionElement.textContent = option;
+                        dropdown.appendChild(optionElement);
+                    });
+                });
+        }
+
+        // Fetch options for each dropdown on page load
+        window.onload = function() {
+            fetchOptions('/bedrooms', 'beds');
+            fetchOptions('/bathrooms', 'baths');
+            fetchOptions('/balconies', 'balcony');
+            fetchOptions('/area_list', 'area_type');
+            fetchOptions('/size_list', 'size'); 
+        };
+
+        // JavaScript function to send data and receive predicted price
+        function sendData() {
+            const form = document.getElementById('predictionForm');
+            const formData = new FormData(form);
+        
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text();
+            })
+            .then(price => {
+                document.getElementById("predictedPrice").innerHTML = "Price per sqft: INR " + price;
+            })
+            .catch(error => {
+                document.getElementById("predictedPrice").innerHTML = "An error occurred: " + error.message;
+            });
+        }
+        
+    </script>
+</body>
+</html>
